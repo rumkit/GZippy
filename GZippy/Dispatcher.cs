@@ -27,7 +27,7 @@ namespace GZippy
         private readonly AutoResetEvent _resultReady = new AutoResetEvent(false);        
 
 
-        private const long ChunkLength = 1024;                
+        private const long ChunkLength = 2048;                
         private bool _endOfStream = false;
 
 
@@ -90,12 +90,13 @@ namespace GZippy
         private byte[] Compress(byte[] data)
         {
             using (var ms = new MemoryStream())
-            using (var zipStream = new GZipStream(ms, CompressionLevel.Optimal))
             {
-                zipStream.Write(data, 0, data.Length);
-                zipStream.Flush();
+                using (var zipStream = new GZipStream(ms, CompressionLevel.Optimal,true))
+                {
+                    zipStream.Write(data, 0, data.Length);                                        
+                }
                 return ms.ToArray();
-            }            
+            }
         }
 
         private byte[] Decompress(byte[] data)
@@ -103,11 +104,7 @@ namespace GZippy
             using (var ms = new MemoryStream(data))
             using (var zipStream = new GZipStream(ms, CompressionMode.Decompress))
             {
-                var decompressed = new byte[ChunkLength];
-                var count = zipStream.Read(decompressed,0,decompressed.Length);
-                var ret = new byte[count];
-                Buffer.BlockCopy(decompressed,0,ret,0,count);
-                return ret;
+                return zipStream.ReadChunk(ChunkLength);                
             }
         }
 

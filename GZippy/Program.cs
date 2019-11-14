@@ -38,10 +38,12 @@ namespace GZippy
         private static ErrorCode Decompress(DecompressOptions options)
         {
             using (var source = File.OpenRead(options.SourceFileName))
+            using (var decorator = new CompressedStreamDecorator(source))
             using (var destination = File.OpenWrite(options.DestinationFileName))
+
             {
                 var dispatcher = new Dispatcher();
-                dispatcher.Decompress(source, destination);
+                dispatcher.Decompress(decorator, destination);
                 Console.WriteLine("ready");
             }
 
