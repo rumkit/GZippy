@@ -14,6 +14,7 @@ namespace GZippy
         {
             _workerThread = new Thread(WorkerRoutine) { IsBackground = true };
             _readyToWork = new ManualResetEvent(false);
+            _results = new ConcurrentQueue<byte[]>();
             _workerThread.Start();            
         }
 
@@ -70,8 +71,7 @@ namespace GZippy
         public bool HasResult => _results.Count > 0;
         public byte[] GetResult()
         {
-            byte[] result;
-            if(_results.TryDequeue(out result))
+            if(_results.TryDequeue(out byte[] result))
             {
                 return result;
             }

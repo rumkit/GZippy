@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace GZippy.CommandLineOptions
 {
-    [Verb("Compress", HelpText="compresses specified file to gzip archive")]
+    [Verb("compress", HelpText="compresses specified file to gzip archive")]
     class CompressOptions : OptionsBase
     {
     }

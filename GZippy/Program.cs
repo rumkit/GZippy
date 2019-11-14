@@ -2,6 +2,7 @@
 using GZippy.CommandLineOptions;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,6 +24,13 @@ namespace GZippy
 
         private static ErrorCode Compress(CompressOptions options)
         {
+            using(var source = File.OpenRead(options.SourceFileName))
+            using (var destination = File.OpenWrite(options.DestinationFileName))
+            {
+                var dispatcher = new Dispatcher();
+                dispatcher.Compress(source,destination);
+                Console.WriteLine("ready");
+            }
             return ErrorCode.Success;
         }
 
