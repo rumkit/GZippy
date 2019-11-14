@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -31,7 +32,7 @@ namespace GZippy
         private long _sourceLength;
 
 
-        public void Process(Stream source, Stream destination)
+        public void Compress(Stream source, Stream destination)
         {
             _sourceLength = source.Length;
             for (int i = 0; i < _workers.Length; i++)
@@ -39,6 +40,20 @@ namespace GZippy
                 _workers[i].QueueJob(
                     (worker) => EnqueueWorkItem(worker, source),
                     (data) => Compress(data),
+                    () => OnChunkCompleted(destination)
+                    );
+            }
+            _resultReady.WaitOne();
+        }
+
+        public void Decompress(Stream source, Stream destination)
+        {
+            _sourceLength = source.Length;
+            for (int i = 0; i < _workers.Length; i++)
+            {
+                _workers[i].QueueJob(
+                    (worker) => EnqueueWorkItem(worker, source),
+                    (data) => Decompress(data),
                     () => OnChunkCompleted(destination)
                     );
             }
@@ -77,17 +92,36 @@ namespace GZippy
 
         private byte[] Compress(byte[] data)
         {
-            return data;
+            using(var ms = new MemoryStream())
+            using (var zipStream = new GZipStream(ms, CompressionLevel.Optimal))
+            {
+                zipStream.Write(data,0,data.Length);
+                zipStream.Flush();
+                return ms.ToArray();
+            }
+        }
+
+        private byte[] Decompress(byte[] data)
+        {
+            using (var ms = new MemoryStream(data))
+            using (var zipStream = new GZipStream(ms, CompressionMode.Decompress))
+            {
+                var decompressed = new byte[ChunkLength];
+                var count = zipStream.Read(decompressed,0,decompressed.Length);
+                var ret = new byte[count];
+                Buffer.BlockCopy(decompressed,0,ret,0,count);
+                return ret;
+            }
         }
 
         private byte[] EnqueueWorkItem(Worker worker, Stream source)
         {
             lock (_activeJobs)
             {
-                if (_sourcePosition >= source.Length)
+                if (_sourcePosition >= _sourceLength)
                     return null;
                 var currentChunkLength = _sourcePosition + ChunkLength > source.Length ?
-                    source.Length - source.Position :
+                    _sourceLength - source.Position :
                     ChunkLength;
                 var payload = new byte[currentChunkLength];
                 source.Read(payload, 0, payload.Length);

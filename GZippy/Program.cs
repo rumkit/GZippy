@@ -14,23 +14,22 @@ namespace GZippy
     {
         static int Main(string[] args)
         {
-            var errorCode = Parser.Default.ParseArguments<DecompressOptions,CompressOptions>(args)
+            var errorCode = Parser.Default.ParseArguments<DecompressOptions, CompressOptions>(args)
                 .MapResult(
                     (DecompressOptions options) => Decompress(options),
                     (CompressOptions options) => Compress(options),
                     errs => ErrorCode.Fail);
-            
+
             return (int)errorCode;
         }
 
         private static ErrorCode Compress(CompressOptions options)
         {
-            using(var source = File.OpenRead(options.SourceFileName))
+            using (var source = File.OpenRead(options.SourceFileName))
             using (var destination = File.OpenWrite(options.DestinationFileName))
-            using (var zipStream = new GZipStream(destination, CompressionLevel.Optimal))
             {
                 var dispatcher = new Dispatcher();
-                dispatcher.Process(source, zipStream);
+                dispatcher.Compress(source, destination);
                 Console.WriteLine("ready");
             }
             return ErrorCode.Success;
@@ -40,12 +39,12 @@ namespace GZippy
         {
             using (var source = File.OpenRead(options.SourceFileName))
             using (var destination = File.OpenWrite(options.DestinationFileName))
-            using (var zipStream = new GZipStream(source, CompressionMode.Decompress))
             {
                 var dispatcher = new Dispatcher();
-                dispatcher.Process(zipStream, destination);
+                dispatcher.Decompress(source, destination);
                 Console.WriteLine("ready");
             }
+
             return ErrorCode.Success;
         }
     }
