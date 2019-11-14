@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -8,11 +9,12 @@ using System.Threading.Tasks;
 
 namespace GZippy
 {
-    class Worker : IDisposable
+    [DebuggerDisplay("State = {State} WorkerId = {_workerThread.ManagedThreadId}")]
+    class Worker
     {
         public Worker()
         {
-            _workerThread = new Thread(WorkerRoutine) { IsBackground = true };
+            _workerThread = new Thread(WorkerRoutine) { IsBackground = true };            
             _readyToWork = new ManualResetEvent(false);
             _results = new ConcurrentQueue<byte[]>();
             _workerThread.Start();            
@@ -26,12 +28,12 @@ namespace GZippy
                 // Try to aquire new payload, if no payload then go to sleep
                 var payload = _payloadSource(this);
                 if(payload == null)
-                {
-                    State = WorkerState.Idle;
+                {                    
                     _readyToWork.Reset();
                     _payloadSource = null;
                     _job = null;
                     _jobCompleted = null;
+                    State = WorkerState.Idle;                    
                     continue;
                 }
                 var result = _job(payload);
@@ -65,6 +67,7 @@ namespace GZippy
             _payloadSource = payloadSource;
             _job = job;
             _jobCompleted = onComplete;
+            State = WorkerState.Busy;
             _readyToWork.Set();
         }        
 
@@ -76,17 +79,6 @@ namespace GZippy
                 return result;
             }
             throw new ConcurrencyException("Result was requested before it is ready");
-        }
-
-        public void Dispose()
-        {
-            
         }       
-    }
-
-    enum WorkerState
-    {
-        Idle,
-        Busy
     }
 }

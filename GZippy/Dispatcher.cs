@@ -27,14 +27,12 @@ namespace GZippy
         private readonly AutoResetEvent _resultReady = new AutoResetEvent(false);        
 
 
-        private const long ChunkLength = 1024;
-        private long _sourcePosition;
-        private long _sourceLength;
+        private const long ChunkLength = 1024;                
+        private bool _endOfStream = false;
 
 
         public void Compress(Stream source, Stream destination)
-        {
-            _sourceLength = source.Length;
+        {            
             for (int i = 0; i < _workers.Length; i++)
             {
                 _workers[i].QueueJob(
@@ -48,7 +46,6 @@ namespace GZippy
 
         public void Decompress(Stream source, Stream destination)
         {
-            _sourceLength = source.Length;
             for (int i = 0; i < _workers.Length; i++)
             {
                 _workers[i].QueueJob(
@@ -72,7 +69,7 @@ namespace GZippy
                     {
                         var result = worker.GetResult();
                         destination.Write(result, 0, result.Length);
-                        if (_sourcePosition >= _sourceLength && _activeJobs.Count == 0)
+                        if (_endOfStream && _activeJobs.Count == 0)
                         {
                             _resultReady.Set();
                         }
@@ -92,13 +89,13 @@ namespace GZippy
 
         private byte[] Compress(byte[] data)
         {
-            using(var ms = new MemoryStream())
+            using (var ms = new MemoryStream())
             using (var zipStream = new GZipStream(ms, CompressionLevel.Optimal))
             {
-                zipStream.Write(data,0,data.Length);
+                zipStream.Write(data, 0, data.Length);
                 zipStream.Flush();
                 return ms.ToArray();
-            }
+            }            
         }
 
         private byte[] Decompress(byte[] data)
@@ -118,16 +115,12 @@ namespace GZippy
         {
             lock (_activeJobs)
             {
-                if (_sourcePosition >= _sourceLength)
-                    return null;
-                var currentChunkLength = _sourcePosition + ChunkLength > source.Length ?
-                    _sourceLength - source.Position :
-                    ChunkLength;
-                var payload = new byte[currentChunkLength];
-                source.Read(payload, 0, payload.Length);
-                _sourcePosition += payload.Length;
-                _activeJobs.Enqueue(worker);
-                return payload;
+                var chunk = source.ReadChunk(ChunkLength);
+                if (chunk == null)
+                    _endOfStream = true;
+                else
+                    _activeJobs.Enqueue(worker);
+                return chunk;
             }
         }
     }
