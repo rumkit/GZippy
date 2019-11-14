@@ -27,7 +27,7 @@ namespace GZippy
         private readonly AutoResetEvent _resultReady = new AutoResetEvent(false);
 
 
-        private const long ChunkLength = 512;
+        private const long ChunkLength = 1024;
         private long _sourcePosition;
         private long _sourceLength;
 
@@ -46,12 +46,12 @@ namespace GZippy
             _resultReady.WaitOne();
         }
 
-        private object _resultLock = new Object();
+        private readonly object _completedLockRoot = new object();
 
         private void OnChunkCompleted(Stream destination)
         {
-            //lock (_resultLock)
-            {
+            lock(_completedLockRoot)
+            { 
                 while (IsNextChunkReady())
                 {
                     if (_activeJobs.TryDequeue(out Worker worker))
@@ -63,7 +63,7 @@ namespace GZippy
                             _resultReady.Set();
                         }
                     }
-                }
+                }                
             }
         }
 
@@ -80,7 +80,7 @@ namespace GZippy
         {
             //todo: add actual data compressing
             var random = new Random(DateTime.Now.Millisecond);
-            Thread.Sleep(random.Next(100));
+            Thread.Sleep(random.Next(10));
             return data;
         }
 
