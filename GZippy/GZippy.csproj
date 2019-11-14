@@ -50,8 +50,11 @@
     <Compile Include="CommandLineOptions\DecompressOptions.cs" />
     <Compile Include="CommandLineOptions\ErrorCode.cs" />
     <Compile Include="CommandLineOptions\OptionsBase.cs" />
+    <Compile Include="ConcurrencyException.cs" />
+    <Compile Include="Dispatcher.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Worker.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
