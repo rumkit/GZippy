@@ -22,9 +22,8 @@ namespace GZippy
 
 
         private readonly Worker[] _workers;
-        private readonly ConcurrentQueue<Worker> _activeJobs = new ConcurrentQueue<Worker>();
-        private readonly AutoResetEvent _chunkReady = new AutoResetEvent(false);
-        private readonly AutoResetEvent _resultReady = new AutoResetEvent(false);
+        private readonly ConcurrentQueue<Worker> _activeJobs = new ConcurrentQueue<Worker>();        
+        private readonly AutoResetEvent _resultReady = new AutoResetEvent(false);        
 
 
         private const long ChunkLength = 1024;
@@ -32,7 +31,7 @@ namespace GZippy
         private long _sourceLength;
 
 
-        public void Compress(Stream source, Stream destination)
+        public void Process(Stream source, Stream destination)
         {
             _sourceLength = source.Length;
             for (int i = 0; i < _workers.Length; i++)
@@ -78,9 +77,6 @@ namespace GZippy
 
         private byte[] Compress(byte[] data)
         {
-            //todo: add actual data compressing
-            var random = new Random(DateTime.Now.Millisecond);
-            Thread.Sleep(random.Next(10));
             return data;
         }
 

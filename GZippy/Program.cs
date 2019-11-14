@@ -3,6 +3,7 @@ using GZippy.CommandLineOptions;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,9 +27,10 @@ namespace GZippy
         {
             using(var source = File.OpenRead(options.SourceFileName))
             using (var destination = File.OpenWrite(options.DestinationFileName))
+            using (var zipStream = new GZipStream(destination, CompressionLevel.Optimal))
             {
                 var dispatcher = new Dispatcher();
-                dispatcher.Compress(source,destination);
+                dispatcher.Process(source, zipStream);
                 Console.WriteLine("ready");
             }
             return ErrorCode.Success;
@@ -36,6 +38,14 @@ namespace GZippy
 
         private static ErrorCode Decompress(DecompressOptions options)
         {
+            using (var source = File.OpenRead(options.SourceFileName))
+            using (var destination = File.OpenWrite(options.DestinationFileName))
+            using (var zipStream = new GZipStream(source, CompressionMode.Decompress))
+            {
+                var dispatcher = new Dispatcher();
+                dispatcher.Process(zipStream, destination);
+                Console.WriteLine("ready");
+            }
             return ErrorCode.Success;
         }
     }
