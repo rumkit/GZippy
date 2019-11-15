@@ -53,7 +53,7 @@
     <Compile Include="CompressedStreamDecorator.cs" />
     <Compile Include="Exceptions\ConcurrencyException.cs" />
     <Compile Include="Dispatcher.cs" />
-    <Compile Include="Extensions.cs" />
+    <Compile Include="StreamExtenstions.cs" />
     <Compile Include="GzipCompressionStrategy.cs" />
     <Compile Include="ICompressionStrategy.cs" />
     <Compile Include="Program.cs" />

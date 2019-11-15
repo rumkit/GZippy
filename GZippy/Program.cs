@@ -14,6 +14,19 @@ namespace GZippy
     {
         static int Main(string[] args)
         {
+            using(var fs = File.Create("test.txt"))
+            using(var sw = new StreamWriter(fs))
+            {                
+                for (int i = 0x41; i <= 0x5A; i++)
+                {
+                    for(int j = 0; j < 2048; j++)
+                    {
+                        sw.Write((char)i);
+                    }
+                }
+            }
+
+
             var errorCode = Parser.Default.ParseArguments<DecompressOptions, CompressOptions>(args)
                 .MapResult(
                     (DecompressOptions options) => Decompress(options),

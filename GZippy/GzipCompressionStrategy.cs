@@ -21,9 +21,8 @@ namespace GZippy
         {
             using (var ms = new MemoryStream(data))
             using (var zipStream = new GZipStream(ms, CompressionMode.Decompress))    
-            {
-                //todo: read to end?
-                return zipStream.ReadChunk(2048);
+            {                
+                return zipStream.ReadAllBytes();
             }
         }
     }

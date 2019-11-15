@@ -22,7 +22,6 @@ namespace GZippy
             }
         }
 
-
         private readonly ICompressionStrategy _compressionStrategy;
         private readonly Worker[] _workers;
         private readonly ConcurrentQueue<Worker> _activeJobs = new ConcurrentQueue<Worker>();
@@ -56,9 +55,7 @@ namespace GZippy
                     );
             }
             WaitAndWriteResult(destination);
-        }
-
-        //todo remove: private readonly object _completedLockRoot = new object();
+        }        
 
         private void WaitAndWriteResult(Stream destination)
         {
@@ -69,16 +66,12 @@ namespace GZippy
                 while (IsNextChunkReady())
                 {
                     if (_activeJobs.TryDequeue(out Worker worker))
-                    {
-                        chunksDequed++;
+                    {                        
                         var result = worker.GetResult();
                         destination.Write(result, 0, result.Length);
                     }
                 }
             }
-
-            Console.WriteLine($"Queued {chunksQueued} Dequeued {chunksDequed}");
-
         }
 
         private bool IsNextChunkReady()
@@ -90,12 +83,10 @@ namespace GZippy
             return false;
         }
 
-        private object enqueLockRoot = new object();
-        private int chunksQueued;
-        private int chunksDequed;
+        private object _enqueLockRoot = new object();        
         private byte[] EnqueueWorkItem(Worker worker, Stream source)
         {
-            lock (enqueLockRoot)
+            lock (_enqueLockRoot)
             {
                 byte[] chunk = source.ReadChunk(ChunkLength);
                 if (chunk == null)
@@ -103,7 +94,6 @@ namespace GZippy
                 else
                 {
                     _activeJobs.Enqueue(worker);
-                    chunksQueued++;
                 }
 
                 return chunk;
