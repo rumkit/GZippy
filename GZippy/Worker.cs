@@ -12,6 +12,17 @@ namespace GZippy
     [DebuggerDisplay("State = {State} WorkerId = {_workerThread.ManagedThreadId}")]
     class Worker
     {
+        private readonly Thread _workerThread;
+        private readonly ManualResetEvent _readyToWork;
+        private readonly ConcurrentQueue<byte[]> _results;
+
+        private Func<Worker, byte[]> _payloadSource;
+        private Func<byte[], byte[]> _job;
+        private Action _jobCompleted;
+
+        public WorkerState State { get; private set; }
+        public bool HasResult => _results.Count > 0;
+
         public Worker()
         {
             _workerThread = new Thread(WorkerRoutine) { IsBackground = true };
@@ -42,19 +53,6 @@ namespace GZippy
             }
         }
 
-        private readonly Thread _workerThread;
-        private readonly ManualResetEvent _readyToWork;
-        private readonly ConcurrentQueue<byte[]> _results;
-
-
-        private Func<Worker, byte[]> _payloadSource;
-        private Func<byte[], byte[]> _job;
-        private Action _jobCompleted;
-
-
-
-        public WorkerState State { get; private set; }
-
         /// <summary>
         /// Worker will query bytes from payloadSource and pass to job untill payloadSource returns null
         /// </summary>
@@ -71,7 +69,6 @@ namespace GZippy
             _readyToWork.Set();
         }
 
-        public bool HasResult => _results.Count > 0;
         public byte[] GetResult()
         {
             if (_results.TryDequeue(out byte[] result))

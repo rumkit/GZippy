@@ -12,6 +12,15 @@ namespace GZippy
 {
     class Dispatcher
     {
+        private const long ChunkLength = 4096;
+
+        private readonly ICompressionStrategy _compressionStrategy;
+        private readonly Worker[] _workers;
+        private readonly ConcurrentQueue<Worker> _activeJobs = new ConcurrentQueue<Worker>();
+        private readonly AutoResetEvent _chunkCompleted = new AutoResetEvent(false);
+        private object _enqueLockRoot = new object();
+        private bool _endOfStream = false;
+
         public Dispatcher(ICompressionStrategy compressionStrategy)
         {
             _compressionStrategy = compressionStrategy;
@@ -21,15 +30,6 @@ namespace GZippy
                 _workers[i] = new Worker();
             }
         }
-
-        private readonly ICompressionStrategy _compressionStrategy;
-        private readonly Worker[] _workers;
-        private readonly ConcurrentQueue<Worker> _activeJobs = new ConcurrentQueue<Worker>();
-        private readonly AutoResetEvent _chunkCompleted = new AutoResetEvent(false);
-
-        private const long ChunkLength = 4096;
-        private bool _endOfStream = false;
-
 
         public void Compress(Stream source, Stream destination)
         {
@@ -55,18 +55,17 @@ namespace GZippy
                     );
             }
             WaitAndWriteResult(destination);
-        }        
+        }
 
         private void WaitAndWriteResult(Stream destination)
         {
             while (!_endOfStream || _activeJobs.Count > 0)
             {
                 _chunkCompleted.WaitOne();
-
                 while (IsNextChunkReady())
                 {
                     if (_activeJobs.TryDequeue(out Worker worker))
-                    {                        
+                    {
                         var result = worker.GetResult();
                         destination.Write(result, 0, result.Length);
                     }
@@ -83,7 +82,6 @@ namespace GZippy
             return false;
         }
 
-        private object _enqueLockRoot = new object();        
         private byte[] EnqueueWorkItem(Worker worker, Stream source)
         {
             lock (_enqueLockRoot)
@@ -95,7 +93,6 @@ namespace GZippy
                 {
                     _activeJobs.Enqueue(worker);
                 }
-
                 return chunk;
             }
         }
