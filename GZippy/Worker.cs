@@ -14,45 +14,45 @@ namespace GZippy
     {
         public Worker()
         {
-            _workerThread = new Thread(WorkerRoutine) { IsBackground = true };            
+            _workerThread = new Thread(WorkerRoutine) { IsBackground = true };
             _readyToWork = new ManualResetEvent(false);
             _results = new ConcurrentQueue<byte[]>();
-            _workerThread.Start();            
+            _workerThread.Start();
         }
 
         private void WorkerRoutine()
         {
-            while(true)
-            {                
-                _readyToWork.WaitOne();                
+            while (true)
+            {
+                _readyToWork.WaitOne();
                 // Try to aquire new payload, if no payload then go to sleep
-                var payload = _payloadSource(this);
-                if(payload == null)
-                {                    
+                byte[] payload = _payloadSource(this);
+                if (payload == null)
+                {
                     _readyToWork.Reset();
                     _payloadSource = null;
                     _job = null;
                     _jobCompleted = null;
-                    State = WorkerState.Idle;                    
+                    State = WorkerState.Idle;
                     continue;
                 }
-                var result = _job(payload);
+                byte[] result = _job(payload);
                 _results.Enqueue(result);
-                _jobCompleted?.Invoke();                
+                _jobCompleted?.Invoke();
             }
         }
-      
+
         private readonly Thread _workerThread;
-        private readonly ManualResetEvent _readyToWork;        
-        private readonly ConcurrentQueue<byte[]> _results;        
+        private readonly ManualResetEvent _readyToWork;
+        private readonly ConcurrentQueue<byte[]> _results;
 
-        
-        private Func<Worker,byte[]> _payloadSource;
-        private Func<byte[],byte[]> _job;
+
+        private Func<Worker, byte[]> _payloadSource;
+        private Func<byte[], byte[]> _job;
         private Action _jobCompleted;
-        
 
-        
+
+
         public WorkerState State { get; private set; }
 
         /// <summary>
@@ -60,25 +60,25 @@ namespace GZippy
         /// </summary>
         /// <param name="payloadSource">source of payload to work with</param>
         /// <param name="job">data processing routine</param>
-        public void QueueJob(Func<Worker, byte[]> payloadSource, Func<byte[],byte[]> job, Action onComplete)
+        public void QueueJob(Func<Worker, byte[]> payloadSource, Func<byte[], byte[]> job, Action onComplete)
         {
-            if(State != WorkerState.Idle)
-                throw new ConcurrencyException("You have started new job without finishing the previos one.");
+            if (State != WorkerState.Idle)
+                throw new ConcurrencyException("You have started new job without finishing the previous one.");
             _payloadSource = payloadSource;
             _job = job;
             _jobCompleted = onComplete;
             State = WorkerState.Busy;
             _readyToWork.Set();
-        }        
+        }
 
         public bool HasResult => _results.Count > 0;
         public byte[] GetResult()
         {
-            if(_results.TryDequeue(out byte[] result))
+            if (_results.TryDequeue(out byte[] result))
             {
                 return result;
             }
             throw new ConcurrencyException("Result was requested before it is ready");
-        }       
+        }
     }
 }

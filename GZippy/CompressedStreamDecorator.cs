@@ -17,10 +17,10 @@ namespace GZippy
         public CompressedStreamDecorator(Stream stream)
         {
             _stream = stream;
-            var firstheader = _stream.ReadChunk(4);
+            byte[] firstheader = _stream.ReadChunk(4);
             if (!firstheader.SequenceEqual(_header))
                 throw new UnsupportedFileFormatException("File format is not supported");
-            Position = 0;
+            _stream.Position = 0;
         }
 
         private readonly Stream _stream;
@@ -43,8 +43,8 @@ namespace GZippy
         public override int Read(byte[] buffer, int offset, int count)
         {            
             var innerBuffer = new byte[count];
-            var bytesRead = _stream.Read(innerBuffer, 0, innerBuffer.Length);
-            var nextHeaderPosition = FindHeader(innerBuffer,bytesRead, _header);
+            int bytesRead = _stream.Read(innerBuffer, 0, innerBuffer.Length);
+            int nextHeaderPosition = FindHeader(innerBuffer,bytesRead, _header);
 
             if(nextHeaderPosition > 0)
             {

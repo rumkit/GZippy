@@ -26,9 +26,9 @@ namespace GZippy
         private static ErrorCode Compress(CompressOptions options)
         {
             using (var source = File.OpenRead(options.SourceFileName))
-            using (var destination = File.OpenWrite(options.DestinationFileName))
+            using (var destination = File.Create(options.DestinationFileName))
             {
-                var dispatcher = new Dispatcher();
+                var dispatcher = new Dispatcher(new GzipCompressionStrategy());
                 dispatcher.Compress(source, destination);
                 Console.WriteLine("ready");
             }
@@ -39,10 +39,10 @@ namespace GZippy
         {
             using (var source = File.OpenRead(options.SourceFileName))
             using (var decorator = new CompressedStreamDecorator(source))
-            using (var destination = File.OpenWrite(options.DestinationFileName))
+            using (var destination = File.Create(options.DestinationFileName))
 
             {
-                var dispatcher = new Dispatcher();
+                var dispatcher = new Dispatcher(new GzipCompressionStrategy());
                 dispatcher.Decompress(decorator, destination);
                 Console.WriteLine("ready");
             }
