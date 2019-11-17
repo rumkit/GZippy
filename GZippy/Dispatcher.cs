@@ -12,14 +12,14 @@ namespace GZippy
 {
     class Dispatcher
     {
-        private const long ChunkLength = 4096;
+        private const long ChunkLength = 2048;
 
         private readonly ICompressionStrategy _compressionStrategy;
         private readonly Worker[] _workers;
         private readonly ConcurrentQueue<Worker> _activeJobs = new ConcurrentQueue<Worker>();
         private readonly AutoResetEvent _chunkCompleted = new AutoResetEvent(false);
         private object _enqueLockRoot = new object();
-        private bool _endOfStream = false;
+        private bool _endOfStream = false;        
 
         public Dispatcher(ICompressionStrategy compressionStrategy)
         {
@@ -32,11 +32,11 @@ namespace GZippy
         }
 
         public void Compress(Stream source, Stream destination)
-        {
+        {            
             foreach (var worker in _workers)
             {
                 worker.QueueJob(
-                    (w) => EnqueueWorkItem(w, source),
+                    (w) => EnqueueWorkItem(w, ()=> source.ReadChunk(ChunkLength)),
                     (data) => _compressionStrategy.Compress(data),
                     () => _chunkCompleted.Set()
                     );
@@ -45,11 +45,11 @@ namespace GZippy
         }
 
         public void Decompress(Stream source, Stream destination)
-        {
+        {            
             foreach (var worker in _workers)
             {
                 worker.QueueJob(
-                    (w) => EnqueueWorkItem(w, source),
+                    (w) => EnqueueWorkItem(w, () => _compressionStrategy.ParseCompressedStream(source)),
                     (data) => _compressionStrategy.Decompress(data),
                     () => _chunkCompleted.Set()
                     );
@@ -61,7 +61,7 @@ namespace GZippy
         {
             while (!_endOfStream || _activeJobs.Count > 0)
             {
-                _chunkCompleted.WaitOne();
+                _chunkCompleted.WaitOne(100);
                 while (IsNextChunkReady())
                 {
                     if (_activeJobs.TryDequeue(out Worker worker))
@@ -82,11 +82,11 @@ namespace GZippy
             return false;
         }
 
-        private byte[] EnqueueWorkItem(Worker worker, Stream source)
+        private byte[] EnqueueWorkItem(Worker worker, Func<byte[]> bytesSource)
         {
             lock (_enqueLockRoot)
             {
-                byte[] chunk = source.ReadChunk(ChunkLength);
+                byte[] chunk = bytesSource();
                 if (chunk == null)
                     _endOfStream = true;
                 else

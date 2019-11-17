@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.IO.Compression;
 
-namespace GZippy
+namespace GZippy.Gzip
 {
     public class GzipCompressionStrategy : ICompressionStrategy
     {
@@ -25,5 +25,10 @@ namespace GZippy
                 return zipStream.ReadAllBytes();
             }
         }
+
+        public byte[] ParseCompressedStream(Stream stream)
+        {
+            return GzipParser.GetFirstGzipStream(stream);
+        }       
     }
 }

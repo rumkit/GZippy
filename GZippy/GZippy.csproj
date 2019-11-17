@@ -50,11 +50,11 @@
     <Compile Include="CommandLineOptions\DecompressOptions.cs" />
     <Compile Include="CommandLineOptions\ErrorCode.cs" />
     <Compile Include="CommandLineOptions\OptionsBase.cs" />
-    <Compile Include="CompressedStreamDecorator.cs" />
     <Compile Include="Exceptions\ConcurrencyException.cs" />
     <Compile Include="Dispatcher.cs" />
+    <Compile Include="Gzip\GzipParser.cs" />
     <Compile Include="StreamExtenstions.cs" />
-    <Compile Include="GzipCompressionStrategy.cs" />
+    <Compile Include="Gzip\GzipCompressionStrategy.cs" />
     <Compile Include="ICompressionStrategy.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

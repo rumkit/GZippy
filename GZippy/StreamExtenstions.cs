@@ -9,6 +9,12 @@ namespace GZippy
 {
     static class StreamExtenstions
     {
+        /// <summary>
+        /// Read chunk of bytes from stream with size <= maxlength
+        /// </summary>
+        /// <param name="stream">source stream to read from</param>
+        /// <param name="maxLength">maximum length of chunk</param>
+        /// <returns>byte array with chunk data</returns>
         public static byte[] ReadChunk(this Stream stream, long maxLength)
         {
             var buffer = new byte[maxLength];
@@ -22,6 +28,12 @@ namespace GZippy
             return ret;
         }
 
+        /// <summary>
+        /// Reads all bytes from stream using consequent reads
+        /// </summary>
+        /// <param name="stream">source stream to read from</param>
+        /// <param name="bufferSize">size of temporary buffer</param>
+        /// <returns>array of all bytes available in stream</returns>
         public static byte[] ReadAllBytes(this Stream stream, int bufferSize=1024)
         {
             var buffer = new byte[bufferSize];

@@ -1,5 +1,6 @@
 ﻿using CommandLine;
 using GZippy.CommandLineOptions;
+using GZippy.Gzip;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -50,13 +51,12 @@ namespace GZippy
 
         private static ErrorCode Decompress(DecompressOptions options)
         {
-            using (var source = File.OpenRead(options.SourceFileName))
-            using (var decorator = new CompressedStreamDecorator(source))
+            using (var source = File.OpenRead(options.SourceFileName))            
             using (var destination = File.Create(options.DestinationFileName))
 
             {
                 var dispatcher = new Dispatcher(new GzipCompressionStrategy());
-                dispatcher.Decompress(decorator, destination);
+                dispatcher.Decompress(source, destination);
                 Console.WriteLine("ready");
             }
 
