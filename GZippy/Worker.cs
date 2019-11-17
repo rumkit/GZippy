@@ -20,7 +20,13 @@ namespace GZippy
         private Func<byte[], byte[]> _job;
         private Action _jobCompleted;
 
+        /// <summary>
+        /// Current worker state.
+        /// </summary>
         public WorkerState State { get; private set; }
+        /// <summary>
+        /// Returns true if there are any queued results.
+        /// </summary>
         public bool HasResult => _results.Count > 0;
 
         public Worker()
@@ -69,6 +75,10 @@ namespace GZippy
             _readyToWork.Set();
         }
 
+        /// <summary>
+        /// Return queued result. You should always check <see cref="HasResult"/> before requesting result.
+        /// </summary>
+        /// <returns>byte array of proccessed data</returns>
         public byte[] GetResult()
         {
             if (_results.TryDequeue(out byte[] result))

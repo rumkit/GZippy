@@ -16,6 +16,11 @@ namespace GZippy.Gzip
 
         private static readonly byte[] Header = new[] { Id1, Id2, CompressionMethod, Flags };        
 
+        /// <summary>
+        /// Searches for valid gzip stream starting with current position of <see cref="stream">.
+        /// </summary>
+        /// <param name="stream"></param>
+        /// <returns>byte array of gzip stream data</returns>
         public static byte[] GetFirstGzipStream(Stream stream)
         {
             byte[] firstheader = stream.ReadChunk(4);

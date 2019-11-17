@@ -15,19 +15,6 @@ namespace GZippy
     {
         static int Main(string[] args)
         {
-            using(var fs = File.Create("test.txt"))
-            using(var sw = new StreamWriter(fs))
-            {                
-                for (int i = 0x41; i <= 0x5A; i++)
-                {
-                    for(int j = 0; j < 2048; j++)
-                    {
-                        sw.Write((char)i);
-                    }
-                }
-            }
-
-
             var errorCode = Parser.Default.ParseArguments<DecompressOptions, CompressOptions>(args)
                 .MapResult(
                     (DecompressOptions options) => Decompress(options),
@@ -39,28 +26,47 @@ namespace GZippy
 
         private static ErrorCode Compress(CompressOptions options)
         {
-            using (var source = File.OpenRead(options.SourceFileName))
-            using (var destination = File.Create(options.DestinationFileName))
+            try 
             {
-                var dispatcher = new Dispatcher(new GzipCompressionStrategy());
-                dispatcher.Compress(source, destination);
-                Console.WriteLine("ready");
+                using (var source = File.OpenRead(options.SourceFileName))
+                using (var destination = File.Create(options.DestinationFileName))
+                {
+                    var dispatcher = new Dispatcher(new GzipCompressionStrategy());
+                    dispatcher.Compress(source, destination);
+                }
             }
+            catch(Exception e)
+            {
+                return HandleError(e);
+            }
+            
             return ErrorCode.Success;
-        }
+        }        
 
         private static ErrorCode Decompress(DecompressOptions options)
         {
-            using (var source = File.OpenRead(options.SourceFileName))            
-            using (var destination = File.Create(options.DestinationFileName))
-
+            try
             {
-                var dispatcher = new Dispatcher(new GzipCompressionStrategy());
-                dispatcher.Decompress(source, destination);
-                Console.WriteLine("ready");
+                using (var source = File.OpenRead(options.SourceFileName))
+                using (var destination = File.Create(options.DestinationFileName))
+                {
+                    var dispatcher = new Dispatcher(new GzipCompressionStrategy());
+                    dispatcher.Decompress(source, destination);                    
+                }
+            }
+            catch (Exception e)
+            {
+                return HandleError(e);
             }
 
             return ErrorCode.Success;
+        }
+
+        private static ErrorCode HandleError(Exception e)
+        {
+            Console.WriteLine("Some error 0_o");
+            Console.WriteLine(e.Message);
+            return ErrorCode.Fail;
         }
     }
 }

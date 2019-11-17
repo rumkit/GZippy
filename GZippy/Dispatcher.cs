@@ -31,6 +31,11 @@ namespace GZippy
             }
         }
 
+        /// <summary>
+        /// Compresses data from <see cref="source"> stream and writes result to <see cref="destination"/> stream
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="destination"></param>
         public void Compress(Stream source, Stream destination)
         {            
             foreach (var worker in _workers)
@@ -44,6 +49,11 @@ namespace GZippy
             WaitAndWriteResult(destination);
         }
 
+        /// <summary>
+        /// Decompresses data from <see cref="source"> stream and writes result to <see cref="destination"/> stream
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="destination"></param>
         public void Decompress(Stream source, Stream destination)
         {            
             foreach (var worker in _workers)
