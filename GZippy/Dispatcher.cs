@@ -12,7 +12,8 @@ namespace GZippy
 {
     class Dispatcher
     {
-        private const long ChunkLength = 2048;
+        // 1 Mb
+        private const long ChunkLength = 1_048_576;
 
         private readonly ICompressionStrategy _compressionStrategy;
         private readonly Worker[] _workers;

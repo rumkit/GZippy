@@ -37,7 +37,7 @@ namespace GZippy
             }
             catch(Exception e)
             {
-                return HandleError(e);
+                return HandleError(e, options);
             }
             
             return ErrorCode.Success;
@@ -56,16 +56,34 @@ namespace GZippy
             }
             catch (Exception e)
             {
-                return HandleError(e);
+                return HandleError(e, options);
             }
 
             return ErrorCode.Success;
         }
 
-        private static ErrorCode HandleError(Exception e)
+        private static ErrorCode HandleError(Exception e, OptionsBase options)
         {
-            Console.WriteLine("Some error 0_o");
-            Console.WriteLine(e.Message);
+            switch(e)
+            {
+                case FileNotFoundException _:
+                    Console.WriteLine($"Could not find input file: {options.SourceFileName}. Make sure file exists.");
+                    break;
+                case IOException _:
+                    Console.WriteLine($"Could not access output file: {options.DestinationFileName}. Please close all programs using this file.");
+                    break;
+                case UnsupportedFileFormatException _:
+                case InvalidDataException _:
+                    Console.WriteLine($"Archive seems to be damaged or has incorrect format.");
+                    break;
+                case Exception ex:
+                    Console.WriteLine("Unexpected error occured. Show this to your programmer");
+                    Console.WriteLine("Error:");
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine("Stacktrace:");
+                    Console.WriteLine(ex.StackTrace);
+                    break;
+            }                                    
             return ErrorCode.Fail;
         }
     }
