@@ -19,7 +19,7 @@ namespace GZippy
         private readonly Worker[] _workers;
         private readonly ConcurrentQueue<Worker> _activeJobs = new ConcurrentQueue<Worker>();
         private readonly AutoResetEvent _chunkCompleted = new AutoResetEvent(false);
-        private object _enqueLockRoot = new object();
+        private readonly object _enqueLockRoot = new object();
         private bool _endOfStream = false;        
 
         public Dispatcher(ICompressionStrategy compressionStrategy)
@@ -33,7 +33,7 @@ namespace GZippy
         }
 
         /// <summary>
-        /// Compresses data from <see cref="source"> stream and writes result to <see cref="destination"/> stream
+        /// Compresses data from <see cref="source"/> stream and writes result to <see cref="destination"/> stream
         /// </summary>
         /// <param name="source"></param>
         /// <param name="destination"></param>
@@ -51,7 +51,7 @@ namespace GZippy
         }
 
         /// <summary>
-        /// Decompresses data from <see cref="source"> stream and writes result to <see cref="destination"/> stream
+        /// Decompresses data from <see cref="source"/> stream and writes result to <see cref="destination"/> stream
         /// </summary>
         /// <param name="source"></param>
         /// <param name="destination"></param>

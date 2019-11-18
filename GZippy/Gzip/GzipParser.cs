@@ -27,24 +27,28 @@ namespace GZippy.Gzip
             if (firstheader == null)
                 return null;
             if (!firstheader.SequenceEqual(Header))
-                throw new UnsupportedFileFormatException("File format is not supported");           
-            
+                throw new UnsupportedFileFormatException("File format is not supported");
+
             var buffer = new List<byte>(firstheader);
             do
             {
                 int nextByte = stream.ReadByte();
                 if (nextByte < 0)
-                    return buffer.ToArray();                                                        
+                    return buffer.ToArray();
                 buffer.Add((byte)nextByte);
             }
             while (!HasNextHeader(buffer));
+            RemoveNextHeader(stream, buffer);
 
+            return buffer.ToArray();
+        }
+
+        private static void RemoveNextHeader(Stream stream, List<byte> buffer)
+        {
             for (int i = 0; i < Header.Length; i++)
                 buffer.RemoveAt(buffer.Count - 1);
             stream.Position -= Header.Length;
-
-            return buffer.ToArray();            
-        }        
+        }
 
         private static bool HasNextHeader(List<byte> buffer)
         {
