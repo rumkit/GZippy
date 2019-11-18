@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace GZippy
 {
-    static class StreamExtenstions
+    static class StreamExtensions
     {
         /// <summary>
         /// Read chunk of bytes from stream with size <= maxlength
