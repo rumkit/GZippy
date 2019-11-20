@@ -34,7 +34,7 @@ namespace GZippy
         /// <param name="stream">source stream to read from</param>
         /// <param name="bufferSize">size of temporary buffer</param>
         /// <returns>array of all bytes available in stream</returns>
-        public static byte[] ReadAllBytes(this Stream stream, int bufferSize=1024)
+        public static byte[] ReadAllBytes(this Stream stream, int bufferSize=1_048_576)
         {
             var buffer = new byte[bufferSize];
             var offset = 0;
