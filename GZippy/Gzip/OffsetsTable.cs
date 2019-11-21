@@ -9,13 +9,13 @@ namespace GZippy.Gzip
 {
     static class OffsetsTable
     {
-        public static void Write(Stream stream, IEnumerable<long> blockOffsets)
+        public static void Write(Stream stream, IEnumerable<long> chunkOffsets)
         {
             long tableOffset = stream.Position;
             stream.Position = 0;
             stream.Write(BitConverter.GetBytes(tableOffset),0,sizeof(long));
             stream.Position = tableOffset;
-            foreach(var offset in blockOffsets)
+            foreach(var offset in chunkOffsets)
             {
                 stream.Write(BitConverter.GetBytes(offset),0,sizeof(long));
             }

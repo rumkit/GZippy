@@ -13,7 +13,7 @@ namespace GZippy
     class Dispatcher
     {
         // 1 Mb
-        private const long ChunkLength = Program.ChunkSize;
+        private const long ChunkLength = 1_048_576;
 
         private readonly ICompressionStrategy _compressionStrategy;
         private readonly IFileFormatter _fileFormatter;
@@ -51,7 +51,7 @@ namespace GZippy
                     );
             }
             var offsets = WaitAndWriteResult(destination);
-            _fileFormatter.WriteTable(destination, offsets);
+            _fileFormatter.WriteHeader(destination, offsets);
         }
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace GZippy
         /// <param name="destination"></param>
         public void Decompress(Stream source, Stream destination)
         {
-            _fileFormatter.ReadTable(source);
+            _fileFormatter.ReadHeader(source);
             foreach (var worker in _workers)
             {
                 worker.QueueJob(
@@ -75,7 +75,7 @@ namespace GZippy
 
         private IEnumerable<long> WaitAndWriteResult(Stream destination)
         {
-            var blockOffsets = new List<long>();
+            var chunkOffsets = new List<long>();
             while (!_endOfStream || _activeJobs.Count > 0)
             {
                 _chunkCompleted.WaitOne(100);
@@ -84,12 +84,12 @@ namespace GZippy
                     if (_activeJobs.TryDequeue(out Worker worker))
                     {
                         var result = worker.GetResult();
-                        blockOffsets.Add(destination.Position);
+                        chunkOffsets.Add(destination.Position);
                         destination.Write(result, 0, result.Length);                        
                     }
                 }
             }
-            return blockOffsets;
+            return chunkOffsets;
         }
 
         private bool IsNextChunkReady()

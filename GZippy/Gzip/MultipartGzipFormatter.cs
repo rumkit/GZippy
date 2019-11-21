@@ -7,6 +7,8 @@ namespace GZippy.Gzip
 
     public class MultipartGzipFormatter : IFileFormatter
     {
+        private long[] _offsets;
+        private int _currentOffset;
         /// <summary>
         /// Parses stream containing several gzip streams and returns the first one.
         /// </summary>
@@ -27,15 +29,23 @@ namespace GZippy.Gzip
             return buffer;
         }
 
-        public void WriteTable(Stream stream, IEnumerable<long> offsets)
+        /// <summary>
+        /// Write offsets table to stream
+        /// </summary>
+        /// <param name="stream">stream to write the table to</param>
+        /// <param name="offsets">chunkOffsets</param>
+        public void WriteHeader(Stream stream, IEnumerable<long> offsets)
         {
             OffsetsTable.Write(stream, offsets);
         }
-
-        private long[] _offsets;
-        private int _currentOffset;
-        public void ReadTable(Stream stream)
+        
+        /// <summary>
+        /// Reads header from archive
+        /// </summary>
+        /// <param name="stream">archive data stream</param>
+        public void ReadHeader(Stream stream)
         {
+            _currentOffset = 0;
             _offsets = OffsetsTable.Read(stream);
         }
     }

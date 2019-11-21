@@ -7,7 +7,7 @@ namespace GZippy
     public interface IFileFormatter
     {
         byte[] ParseCompressedStream(Stream stream);
-        void WriteTable(Stream stream, IEnumerable<long> offsets);
-        void ReadTable(Stream stream);
+        void WriteHeader(Stream stream, IEnumerable<long> offsets);
+        void ReadHeader(Stream stream);
     }
 }

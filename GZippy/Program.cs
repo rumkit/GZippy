@@ -12,8 +12,7 @@ using System.Threading.Tasks;
 namespace GZippy
 {
     static class Program
-    {
-        public const int ChunkSize = 1_048_576;
+    {        
         static int Main(string[] args)
         {
             var errorCode = Parser.Default.ParseArguments<DecompressOptions, CompressOptions>(args)
