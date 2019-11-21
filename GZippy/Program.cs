@@ -32,7 +32,8 @@ namespace GZippy
                 using (var source = File.OpenRead(options.SourceFileName))
                 using (var destination = File.Create(options.DestinationFileName))
                 {
-                    var dispatcher = new Dispatcher(new GzipCompressionStrategy());
+                    var dispatcher = new Dispatcher(new GzipCompressionStrategy(),
+                        new MultipartGzipFormatter());
                     dispatcher.Compress(source, destination);
                 }
             }
@@ -51,7 +52,8 @@ namespace GZippy
                 using (var source = File.OpenRead(options.SourceFileName))
                 using (var destination = File.Create(options.DestinationFileName))
                 {
-                    var dispatcher = new Dispatcher(new GzipCompressionStrategy());
+                    var dispatcher = new Dispatcher(new GzipCompressionStrategy(),
+                        new MultipartGzipFormatter());
                     dispatcher.Decompress(source, destination);                    
                 }
             }

@@ -1,11 +1,11 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.IO.Compression;
 
 namespace GZippy.Gzip
 {
     public class GzipCompressionStrategy : ICompressionStrategy
-    {
-        private readonly GzipParser _parser = new GzipParser();
+    {        
         /// <summary>
         /// Utilizes <see cref="GZipStream"/> to compress given chunk.
         /// </summary>
@@ -29,22 +29,13 @@ namespace GZippy.Gzip
         /// <param name="data">Data to decompress</param>
         /// <returns>Byte array containing block of uncompressed data</returns>
         public byte[] Decompress(byte[] data)
-        {
+        {           
             using (var ms = new MemoryStream(data))
             using (var zipStream = new GZipStream(ms, CompressionMode.Decompress))    
             {                
                 return zipStream.ReadAllBytes();
             }
         }
-
-        /// <summary>
-        /// Parses stream containing several gzip streams and returns the first one.
-        /// </summary>
-        /// <param name="stream"></param>
-        /// <returns>Byte array of gzip stream data</returns>
-        public byte[] ParseCompressedStream(Stream stream)
-        {
-            return _parser.GetFirstGzipStream(stream);
-        }       
+        
     }
 }

@@ -12,13 +12,13 @@ namespace GZippy.Gzip
         private const byte Id1 = 0x1F;
         private const byte Id2 = 0x8b;
         private const byte CompressionMethod = 0x08;
-        private const byte Flags = 0;        
-        private const int DefaultBufferLength = Program.ChunkSize;
-
+        private const byte Flags = 0;
+        private const int DefaultBufferLength = Program.ChunkSize / 2;        
         private static readonly byte[] Header = new[] { Id1, Id2, CompressionMethod, Flags };
 
         private int _bytesChecked;
         private int _searchIndex;
+        private int _lastChunkSize = -1;
 
         /// <summary>
         /// Searches for valid gzip stream starting with current position of <see cref="stream">.
@@ -27,7 +27,7 @@ namespace GZippy.Gzip
         /// <returns>byte array of gzip stream data</returns>
         public byte[] GetFirstGzipStream(Stream stream)
         {
-            if(!stream.CanRead || !stream.CanSeek)
+            if (!stream.CanRead || !stream.CanSeek)
                 throw new ArgumentException("Cannot parse this stream");
             var startPosition = stream.Position;
             byte[] firstheader = stream.ReadChunk(4);
@@ -39,43 +39,84 @@ namespace GZippy.Gzip
             _bytesChecked = 0;
             _searchIndex = 0;
             int headerPosition;
-            int bytesRead = 0;
             byte[] buffer;
-            
+            var bufferLength = _lastChunkSize > 0 ? (int)(_lastChunkSize * 1.1) : DefaultBufferLength;
+            int bytesRead;
             do
-            {                
-                buffer = new byte[DefaultBufferLength];
-                bytesRead = stream.Read(buffer, 0, buffer.Length);                
+            {
+
+                buffer = new byte[bufferLength];
+                bytesRead = stream.Read(buffer, 0, buffer.Length);
             }
             while ((headerPosition = FindHeaderPosition(buffer)) < 0 && bytesRead == buffer.Length);
 
             stream.Position = startPosition;
-            if(headerPosition == -1)
-                return stream.ReadAllBytes();            
+            if (headerPosition == -1)
+                return stream.ReadAllBytes();
             var gzipChunk = new byte[_bytesChecked];
-            stream.Read(gzipChunk,0,gzipChunk.Length);
+            stream.Read(gzipChunk, 0, gzipChunk.Length);
+            _lastChunkSize = gzipChunk.Length;
             return gzipChunk;
         }
-        
+
 
         private int FindHeaderPosition(byte[] buffer)
         {
-            for(var i = 0; i < buffer.Length; i++)
+            int position = -1;
+            var _checkedPrev = _bytesChecked;
+            if(_lastChunkSize > 0)
+                position = FindHeaderPositionPredicted(buffer);
+            if(position < 0)
+            {
+                _searchIndex = 0;
+                _lastChunkSize = -1;
+                _bytesChecked = _checkedPrev;
+                position = FindHeaderPositionFull(buffer);
+            }
+            return position;
+
+        }
+
+        private int FindHeaderPositionPredicted(byte[] buffer)
+        {
+            var predictionGap = buffer.Length / 5;
+            _bytesChecked += buffer.Length - predictionGap;
+            for (var i = buffer.Length - predictionGap; i < buffer.Length; i++)
             {
                 _bytesChecked++;
-                if(buffer[i] == Header[_searchIndex])
+                if (buffer[i] == Header[_searchIndex])
                 {
                     _searchIndex++;
-                    if(_searchIndex >= Header.Length)
+                    if (_searchIndex >= Header.Length)
                     {
                         return (_bytesChecked + 1) - Header.Length;
                     }
-                        
+
                 }
                 else
                     _searchIndex = 0;
             }
             return -1;
-        }        
+        }
+
+        private int FindHeaderPositionFull(byte[] buffer)
+        {
+            for (var i = 0; i < buffer.Length; i++)
+            {
+                _bytesChecked++;
+                if (buffer[i] == Header[_searchIndex])
+                {
+                    _searchIndex++;
+                    if (_searchIndex >= Header.Length)
+                    {
+                        return (_bytesChecked + 1) - Header.Length;
+                    }
+
+                }
+                else
+                    _searchIndex = 0;
+            }
+            return -1;
+        }
     }
 }

@@ -34,7 +34,7 @@ namespace GZippy
         /// <param name="stream">source stream to read from</param>
         /// <param name="bufferSize">size of temporary buffer</param>
         /// <returns>array of all bytes available in stream</returns>
-        public static byte[] ReadAllBytes(this Stream stream, int bufferSize=1_048_576)
+        public static byte[] ReadAllBytes(this Stream stream, int bufferSize=1_048_576 + 1)
         {
             var buffer = new byte[bufferSize];
             var offset = 0;
@@ -49,6 +49,20 @@ namespace GZippy
             var ret = new byte[buffer.Length - (bufferSize - bytesRead)];
             Buffer.BlockCopy(buffer, 0, ret, 0, ret.Length);
             return ret;
+        }
+
+        /// <summary>
+        /// Reads 64-bit integer from stream
+        /// </summary>
+        /// <param name="stream">source stream to read from</param>        
+        /// <returns></returns>
+        public static long? ReadInt64(this Stream stream)
+        {
+            var buffer = new byte[sizeof(long)];
+            var bytesRead = stream.Read(buffer,0,buffer.Length);
+            if(bytesRead < sizeof(long))
+                return null;
+            return BitConverter.ToInt64(buffer,0);
         }
     }
 }

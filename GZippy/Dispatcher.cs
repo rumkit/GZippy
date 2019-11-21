@@ -16,15 +16,17 @@ namespace GZippy
         private const long ChunkLength = Program.ChunkSize;
 
         private readonly ICompressionStrategy _compressionStrategy;
+        private readonly IFileFormatter _fileFormatter;
         private readonly Worker[] _workers;
         private readonly ConcurrentQueue<Worker> _activeJobs = new ConcurrentQueue<Worker>();
         private readonly AutoResetEvent _chunkCompleted = new AutoResetEvent(false);
-        private readonly object _enqueLockRoot = new object();
+        private readonly object _enqueueLockRoot = new object();
         private bool _endOfStream = false;        
 
-        public Dispatcher(ICompressionStrategy compressionStrategy)
+        public Dispatcher(ICompressionStrategy compressionStrategy, IFileFormatter fileFormatter)
         {
             _compressionStrategy = compressionStrategy;
+            _fileFormatter = fileFormatter;
             _workers = new Worker[Environment.ProcessorCount];
             for (int i = 0; i < _workers.Length; i++)
             {
@@ -39,6 +41,7 @@ namespace GZippy
         /// <param name="destination"></param>
         public void Compress(Stream source, Stream destination)
         {            
+            destination.Position = sizeof(long);
             foreach (var worker in _workers)
             {
                 worker.QueueJob(
@@ -47,7 +50,8 @@ namespace GZippy
                     () => _chunkCompleted.Set()
                     );
             }
-            WaitAndWriteResult(destination);
+            var offsets = WaitAndWriteResult(destination);
+            _fileFormatter.WriteTable(destination, offsets);
         }
 
         /// <summary>
@@ -56,11 +60,12 @@ namespace GZippy
         /// <param name="source"></param>
         /// <param name="destination"></param>
         public void Decompress(Stream source, Stream destination)
-        {            
+        {
+            _fileFormatter.ReadTable(source);
             foreach (var worker in _workers)
             {
                 worker.QueueJob(
-                    (w) => EnqueueWorkItem(w, () => _compressionStrategy.ParseCompressedStream(source)),
+                    (w) => EnqueueWorkItem(w, () => _fileFormatter.ParseCompressedStream(source)),
                     (data) => _compressionStrategy.Decompress(data),
                     () => _chunkCompleted.Set()
                     );
@@ -68,8 +73,9 @@ namespace GZippy
             WaitAndWriteResult(destination);
         }
 
-        private void WaitAndWriteResult(Stream destination)
+        private IEnumerable<long> WaitAndWriteResult(Stream destination)
         {
+            var blockOffsets = new List<long>();
             while (!_endOfStream || _activeJobs.Count > 0)
             {
                 _chunkCompleted.WaitOne(100);
@@ -78,10 +84,12 @@ namespace GZippy
                     if (_activeJobs.TryDequeue(out Worker worker))
                     {
                         var result = worker.GetResult();
-                        destination.Write(result, 0, result.Length);
+                        blockOffsets.Add(destination.Position);
+                        destination.Write(result, 0, result.Length);                        
                     }
                 }
             }
+            return blockOffsets;
         }
 
         private bool IsNextChunkReady()
@@ -95,8 +103,8 @@ namespace GZippy
 
         private byte[] EnqueueWorkItem(Worker worker, Func<byte[]> bytesSource)
         {
-            lock (_enqueLockRoot)
-            {
+            lock(_enqueueLockRoot)
+            {             
                 byte[] chunk = bytesSource();
                 if (chunk == null)
                     _endOfStream = true;
@@ -105,7 +113,7 @@ namespace GZippy
                     _activeJobs.Enqueue(worker);
                 }
                 return chunk;
-            }
+            }            
         }
     }
 }
