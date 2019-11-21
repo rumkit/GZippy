@@ -31,13 +31,14 @@ namespace GZippy.Gzip
         /// <returns></returns>
         public static long[] Read(Stream stream)
         {
-            var startPosition = stream.Position;
-            var tableIndexPosition = stream.Length - sizeof(long);
-            stream.Position = tableIndexPosition;
+            long startPosition = stream.Position;
+            long tableIndexOffset = stream.Length - sizeof(long);
+            stream.Position = tableIndexOffset;
             var tableOffset = stream.ReadInt64().Value;
             stream.Position = tableOffset;
-            var offsets = new List<long>();
-            while (stream.Position < tableIndexPosition)
+            var chunksCount = (tableIndexOffset - tableOffset) / sizeof(long);
+            var offsets = new List<long>((int)chunksCount);
+            while (stream.Position < tableIndexOffset)
             {
                 var offset = stream.ReadInt64().Value;
                 offsets.Add(offset);
