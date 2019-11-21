@@ -13,6 +13,7 @@ namespace GZippy
 {
     static class Program
     {
+        public const int ChunkSize = 1_048_576;
         static int Main(string[] args)
         {
             var errorCode = Parser.Default.ParseArguments<DecompressOptions, CompressOptions>(args)
@@ -37,7 +38,7 @@ namespace GZippy
             }
             catch(Exception e)
             {
-                return HandleError(e, options);
+                return HandleError((dynamic)e, options);
             }
             
             return ErrorCode.Success;
@@ -56,34 +57,36 @@ namespace GZippy
             }
             catch (Exception e)
             {
-                return HandleError(e, options);
+                return HandleError((dynamic)e, options);
             }
 
             return ErrorCode.Success;
         }
 
+        private static ErrorCode HandleError(FileNotFoundException e, OptionsBase options)
+        {
+            Console.WriteLine($"Could not find input file: {options.SourceFileName}. Make sure file exists.");
+            return ErrorCode.Fail;
+        }
+
+        private static ErrorCode HandleError(UnsupportedFileFormatException e, OptionsBase options)
+        {
+            Console.WriteLine($"Archive seems to be damaged or has incorrect format.");
+            return ErrorCode.Fail;
+        }
+        private static ErrorCode HandleError(InvalidDataException e, OptionsBase options)
+        {
+            Console.WriteLine($"Archive seems to be damaged or has incorrect format.");
+            return ErrorCode.Fail;
+        }
+
         private static ErrorCode HandleError(Exception e, OptionsBase options)
         {
-            switch(e)
-            {
-                case FileNotFoundException _:
-                    Console.WriteLine($"Could not find input file: {options.SourceFileName}. Make sure file exists.");
-                    break;
-                case IOException _:
-                    Console.WriteLine($"Could not access output file: {options.DestinationFileName}. Please close all programs using this file.");
-                    break;
-                case UnsupportedFileFormatException _:
-                case InvalidDataException _:
-                    Console.WriteLine($"Archive seems to be damaged or has incorrect format.");
-                    break;
-                case Exception ex:
-                    Console.WriteLine("Unexpected error occured. Show this to your programmer");
-                    Console.WriteLine("Error:");
-                    Console.WriteLine(ex.Message);
-                    Console.WriteLine("Stacktrace:");
-                    Console.WriteLine(ex.StackTrace);
-                    break;
-            }                                    
+            Console.WriteLine("Unexpected error occured. Show this to your programmer");
+            Console.WriteLine("Error:");
+            Console.WriteLine(e.Message);
+            Console.WriteLine("Stacktrace:");
+            Console.WriteLine(e.StackTrace);
             return ErrorCode.Fail;
         }
     }

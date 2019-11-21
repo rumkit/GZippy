@@ -5,6 +5,7 @@ namespace GZippy.Gzip
 {
     public class GzipCompressionStrategy : ICompressionStrategy
     {
+        private readonly GzipParser _parser = new GzipParser();
         /// <summary>
         /// Utilizes <see cref="GZipStream"/> to compress given chunk.
         /// </summary>
@@ -43,7 +44,7 @@ namespace GZippy.Gzip
         /// <returns>Byte array of gzip stream data</returns>
         public byte[] ParseCompressedStream(Stream stream)
         {
-            return GzipParser.GetFirstGzipStream(stream);
+            return _parser.GetFirstGzipStream(stream);
         }       
     }
 }

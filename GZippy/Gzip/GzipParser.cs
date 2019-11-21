@@ -7,22 +7,25 @@ using System.Threading.Tasks;
 
 namespace GZippy.Gzip
 {
-    static class GzipParser
+    class GzipParser
     {
         private const byte Id1 = 0x1F;
         private const byte Id2 = 0x8b;
         private const byte CompressionMethod = 0x08;
         private const byte Flags = 0;        
-        private const int DefaultBufferLength = 1_048_576;
+        private const int DefaultBufferLength = Program.ChunkSize;
 
-        private static readonly byte[] Header = new[] { Id1, Id2, CompressionMethod, Flags };        
+        private static readonly byte[] Header = new[] { Id1, Id2, CompressionMethod, Flags };
+
+        private int _bytesChecked;
+        private int _searchIndex;
 
         /// <summary>
         /// Searches for valid gzip stream starting with current position of <see cref="stream">.
         /// </summary>
         /// <param name="stream"></param>
         /// <returns>byte array of gzip stream data</returns>
-        public static byte[] GetFirstGzipStream(Stream stream)
+        public byte[] GetFirstGzipStream(Stream stream)
         {
             if(!stream.CanRead || !stream.CanSeek)
                 throw new ArgumentException("Cannot parse this stream");
@@ -33,13 +36,14 @@ namespace GZippy.Gzip
             if (!firstheader.SequenceEqual(Header))
                 throw new UnsupportedFileFormatException("File format is not supported");
 
+            _bytesChecked = 0;
+            _searchIndex = 0;
             int headerPosition;
             int bytesRead = 0;
             byte[] buffer;
-            int actualHeaderPosition = 0;
+            
             do
             {                
-                actualHeaderPosition += bytesRead;
                 buffer = new byte[DefaultBufferLength];
                 bytesRead = stream.Read(buffer, 0, buffer.Length);                
             }
@@ -47,26 +51,29 @@ namespace GZippy.Gzip
 
             stream.Position = startPosition;
             if(headerPosition == -1)
-                return stream.ReadAllBytes();
-            actualHeaderPosition += headerPosition;
-            var gzipChunk = new byte[Header.Length + actualHeaderPosition];
+                return stream.ReadAllBytes();            
+            var gzipChunk = new byte[_bytesChecked];
             stream.Read(gzipChunk,0,gzipChunk.Length);
             return gzipChunk;
         }
+        
 
-        private static int FindHeaderPosition(byte[] buffer)
+        private int FindHeaderPosition(byte[] buffer)
         {
-            var searchIndex = 0;
             for(var i = 0; i < buffer.Length; i++)
             {
-                if(buffer[i] == Header[searchIndex])
+                _bytesChecked++;
+                if(buffer[i] == Header[_searchIndex])
                 {
-                    searchIndex++;
-                    if(searchIndex >= Header.Length)
-                        return (i + 1) - Header.Length;
+                    _searchIndex++;
+                    if(_searchIndex >= Header.Length)
+                    {
+                        return (_bytesChecked + 1) - Header.Length;
+                    }
+                        
                 }
                 else
-                    searchIndex = 0;
+                    _searchIndex = 0;
             }
             return -1;
         }        

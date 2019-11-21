@@ -13,7 +13,7 @@ namespace GZippy
     class Dispatcher
     {
         // 1 Mb
-        private const long ChunkLength = 1_048_576;
+        private const long ChunkLength = Program.ChunkSize;
 
         private readonly ICompressionStrategy _compressionStrategy;
         private readonly Worker[] _workers;
