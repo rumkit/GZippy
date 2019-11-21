@@ -53,7 +53,7 @@
     <Compile Include="Exceptions\ConcurrencyException.cs" />
     <Compile Include="Dispatcher.cs" />
     <Compile Include="Gzip\MultipartGzipFormatter.cs" />
-    <Compile Include="Gzip\OffsetsTable.cs" />
+    <Compile Include="Gzip\MultipartMetadata.cs" />
     <Compile Include="IFileFormatter.cs" />
     <Compile Include="StreamExtensions.cs" />
     <Compile Include="Gzip\GzipCompressionStrategy.cs" />

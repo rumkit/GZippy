@@ -30,23 +30,23 @@ namespace GZippy.Gzip
         }
 
         /// <summary>
-        /// Write offsets table to stream
+        /// Write metadata to archive
         /// </summary>
         /// <param name="stream">stream to write the table to</param>
         /// <param name="offsets">chunkOffsets</param>
-        public void WriteHeader(Stream stream, IEnumerable<long> offsets)
+        public void WriteMetadata(Stream stream, IEnumerable<long> offsets)
         {
-            OffsetsTable.Write(stream, offsets);
+            MultipartMetadata.Write(stream, offsets);
         }
         
         /// <summary>
-        /// Reads header from archive
+        /// Reads metada from archive
         /// </summary>
         /// <param name="stream">archive data stream</param>
-        public void ReadHeader(Stream stream)
+        public void ReadMetadata(Stream stream)
         {
             _currentOffset = 0;
-            _offsets = OffsetsTable.Read(stream);
+            _offsets = MultipartMetadata.Read(stream);
         }
     }
 }

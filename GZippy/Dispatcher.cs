@@ -41,7 +41,6 @@ namespace GZippy
         /// <param name="destination"></param>
         public void Compress(Stream source, Stream destination)
         {            
-            destination.Position = sizeof(long);
             foreach (var worker in _workers)
             {
                 worker.QueueJob(
@@ -51,7 +50,7 @@ namespace GZippy
                     );
             }
             var offsets = WaitAndWriteResult(destination);
-            _fileFormatter.WriteHeader(destination, offsets);
+            _fileFormatter.WriteMetadata(destination, offsets);
         }
 
         /// <summary>
@@ -61,7 +60,7 @@ namespace GZippy
         /// <param name="destination"></param>
         public void Decompress(Stream source, Stream destination)
         {
-            _fileFormatter.ReadHeader(source);
+            _fileFormatter.ReadMetadata(source);
             foreach (var worker in _workers)
             {
                 worker.QueueJob(

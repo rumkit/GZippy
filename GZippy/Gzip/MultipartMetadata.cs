@@ -7,32 +7,32 @@ using System.Threading.Tasks;
 
 namespace GZippy.Gzip
 {
-    static class OffsetsTable
+    static class MultipartMetadata
     {
         public static void Write(Stream stream, IEnumerable<long> chunkOffsets)
         {
             long tableOffset = stream.Position;
-            stream.Position = 0;
-            stream.Write(BitConverter.GetBytes(tableOffset),0,sizeof(long));
-            stream.Position = tableOffset;
             foreach(var offset in chunkOffsets)
             {
                 stream.Write(BitConverter.GetBytes(offset),0,sizeof(long));
             }
+            stream.Write(BitConverter.GetBytes(tableOffset), 0, sizeof(long));
         }
 
         public static long[] Read(Stream stream)
         {
+            var startPosition = stream.Position;
+            var tableIndexPosition = stream.Length - sizeof(long);
+            stream.Position = tableIndexPosition;
             var tableOffset = stream.ReadInt64().Value;
-            var dataOffset = stream.Position;
             stream.Position = tableOffset;
             var offsets = new List<long>();
-            long? offset;
-            while ((offset = stream.ReadInt64()) != null)
+            while (stream.Position < tableIndexPosition)
             {
-                offsets.Add(offset.Value);
+                var offset = stream.ReadInt64().Value;
+                offsets.Add(offset);
             }
-            stream.Position = dataOffset;
+            stream.Position = startPosition;
             return offsets.ToArray();
         }
     }
