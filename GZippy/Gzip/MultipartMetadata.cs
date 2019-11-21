@@ -9,6 +9,11 @@ namespace GZippy.Gzip
 {
     static class MultipartMetadata
     {
+        /// <summary>
+        /// Writes specified metadata to the end of the stream
+        /// </summary>
+        /// <param name="stream"></param>
+        /// <param name="chunkOffsets"></param>
         public static void Write(Stream stream, IEnumerable<long> chunkOffsets)
         {
             long tableOffset = stream.Position;
@@ -19,6 +24,11 @@ namespace GZippy.Gzip
             stream.Write(BitConverter.GetBytes(tableOffset), 0, sizeof(long));
         }
 
+        /// <summary>
+        /// Reads metadata from stream. Stream position remains the same
+        /// </summary>
+        /// <param name="stream"></param>
+        /// <returns></returns>
         public static long[] Read(Stream stream)
         {
             var startPosition = stream.Position;
