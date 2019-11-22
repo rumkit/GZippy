@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -49,7 +50,9 @@ namespace GZippy
             var ret = new byte[buffer.Length - (bufferSize - bytesRead)];
             Buffer.BlockCopy(buffer, 0, ret, 0, ret.Length);
             return ret;
-        }
+        }      
+
+
 
         /// <summary>
         /// Reads 64-bit integer from stream

@@ -15,6 +15,7 @@ namespace GZippy
         private readonly Thread _workerThread;
         private readonly ManualResetEvent _readyToWork;
         private readonly ConcurrentQueue<byte[]> _results;
+        private readonly int _maxResults;
 
         private Func<Worker, byte[]> _payloadSource;
         private Func<byte[], byte[]> _job;
@@ -29,8 +30,9 @@ namespace GZippy
         /// </summary>
         public bool HasResult => _results.Count > 0;
 
-        public Worker()
+        public Worker(int maxResults = 10)
         {
+            _maxResults = maxResults;
             _workerThread = new Thread(WorkerRoutine) { IsBackground = true };
             _readyToWork = new ManualResetEvent(false);
             _results = new ConcurrentQueue<byte[]>();
@@ -39,6 +41,7 @@ namespace GZippy
 
         private void WorkerRoutine()
         {
+            var sw = new SpinWait();
             while (true)
             {
                 _readyToWork.WaitOne();
@@ -54,6 +57,8 @@ namespace GZippy
                     continue;
                 }
                 byte[] result = _job(payload);
+                while (_results.Count > _maxResults)
+                    sw.SpinOnce();
                 _results.Enqueue(result);
                 _jobCompleted?.Invoke();
             }

@@ -14,9 +14,10 @@ namespace GZippy
     {
         // 1 Mb
         private const long ChunkLength = 1_048_576;
+        private const int MaxPendingResults = 100;
 
         private readonly ICompressionStrategy _compressionStrategy;
-        private readonly IFileFormatter _fileFormatter;
+        private readonly IFileFormatter _fileFormatter;        
         private readonly Worker[] _workers;
         private readonly ConcurrentQueue<Worker> _activeJobs = new ConcurrentQueue<Worker>();
         private readonly AutoResetEvent _chunkCompleted = new AutoResetEvent(false);
@@ -30,7 +31,7 @@ namespace GZippy
             _workers = new Worker[Environment.ProcessorCount];
             for (int i = 0; i < _workers.Length; i++)
             {
-                _workers[i] = new Worker();
+                _workers[i] = new Worker(MaxPendingResults/Environment.ProcessorCount);
             }
         }
 
@@ -40,7 +41,8 @@ namespace GZippy
         /// <param name="source"></param>
         /// <param name="destination"></param>
         public void Compress(Stream source, Stream destination)
-        {            
+        {         
+            
             foreach (var worker in _workers)
             {
                 worker.QueueJob(
@@ -59,7 +61,7 @@ namespace GZippy
         /// <param name="source"></param>
         /// <param name="destination"></param>
         public void Decompress(Stream source, Stream destination)
-        {
+        {            
             _fileFormatter.ReadMetadata(source);
             foreach (var worker in _workers)
             {
